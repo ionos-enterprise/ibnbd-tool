@@ -2,7 +2,7 @@
 title: RNBD
 section: 8
 header: System Administration Utilities
-footer: 1.0.23
+footer: 1.2.0
 date: July 2021
 ---
 # NAME
