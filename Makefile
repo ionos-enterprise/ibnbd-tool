@@ -13,7 +13,7 @@ SRC = $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
 SRC_H = $(wildcard *.h)
 
-DIST := dist man/rnbd.8 bash-completion/rnbd README.md rnbd.h2md.sh Makefile $(SRC) $(SRC_H)
+DIST := dist bash-completion/rnbd README.md rnbd.h2md.sh Makefile NEWS spell.ignore examples $(SRC) $(SRC_H)
 
 TARGETS_OBJ = rnbd.o
 TARGETS = $(TARGETS_OBJ:.o=)
