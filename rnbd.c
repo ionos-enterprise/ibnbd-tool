@@ -551,7 +551,7 @@ static void print_param_descr(char *str)
 		print_opt(s->param_str, s->descr);
 }
 
-static  void print_param(const char *str, struct param *const params[],
+static void print_param(const char *str, struct param *const params[],
 			const struct rnbd_ctx *ctx)
 {
 	do {
@@ -559,7 +559,7 @@ static  void print_param(const char *str, struct param *const params[],
 	} while ((*++params)->param_str);
 }
 
-static  void help_param(const char *str, struct param *const params[],
+static void help_param(const char *str, struct param *const params[],
 		       const struct rnbd_ctx *ctx)
 {
 	usage_param(str, params, ctx);
@@ -4044,17 +4044,8 @@ static void help_start(const struct rnbd_ctx *ctx)
 		help_param(ctx->pname, params_flags_help, ctx);
 		printf("\n\n");
 	}
+
 	help_param(ctx->pname, params_mode_help, ctx);
-
-	if (ctx->help_set) {
-
-		printf("\n\n");
-		help_mode("client",
-			  params_object_type_help_client, ctx);
-		printf("\n\n");
-		help_mode("server",
-			  params_object_type_help_server, ctx);
-	}
 }
 
 static int init_show(enum rnbdmode rnbdmode,
