@@ -23,6 +23,7 @@
 #include "rnbd-sysfs.h"
 
 #define HCA_DIR "/sys/class/infiniband/"
+extern bool trm;
 
 const struct bit_str bits[] = {
 	{"B", 0, "Byte"}, {"K", 10, "KiB"}, {"M", 20, "MiB"}, {"G", 30, "GiB"},
@@ -365,7 +366,7 @@ int path_to_shortdesc(char *str, size_t len, const struct rnbd_ctx *ctx,
 	rnbd_pathname_to_norm(path_short, sizeof(path_short), p->pathname);
 
 	return snprintf(str, len, "%s %d %s%s%s", p->hca_name, p->hca_port,
-			CLR(ctx->trm, c, path_short));
+			CLR(trm, c, path_short));
 }
 
 int act_path_cnt_to_state(char *str, size_t len, const struct rnbd_ctx *ctx,
@@ -621,16 +622,14 @@ int read_port_descs(struct port_desc *port_descs, int max_ports)
 	return cnt;
 }
 
-int start_shell_exec(FILE **pipe, const char *cmd,
-		     const struct rnbd_ctx *ctx)
+int start_shell_exec(FILE **pipe, const char *cmd)
 {
 	int err = 0;
 
 	*pipe = popen(cmd, "re");
 	if (!*pipe) {
 		err = -errno;
-		ERR(ctx->trm,
-		    "failed to execute '%s': %s (%d)\n",
+		ERR(trm, "failed to execute '%s': %s (%d)\n",
 		    cmd, strerror(-err), err);
 	}
 
@@ -638,16 +637,14 @@ int start_shell_exec(FILE **pipe, const char *cmd,
 }
 
 
-int stop_shell_exec(FILE *pipe,
-		    const struct rnbd_ctx *ctx)
+int stop_shell_exec(FILE *pipe)
 {
 	int err;
 
 	err = pclose(pipe);
 	if (err == -1) {
 		err = -errno;
-		ERR(ctx->trm,
-		    "pclose failed: %s (%d)\n",
+		ERR(trm, "pclose failed: %s (%d)\n",
 		    strerror(-err), err);
 	} else if (err) {
 
@@ -714,7 +711,7 @@ int rnbd_resolve(const char *host, const char *hca, const char *port,
 		 "saquery -C %s -P %s | grep -wB10 %s |grep port_guid | cut -d'x' -f2",
 		 hca, port, host);
 
-	err = start_shell_exec(&pipe, cmd, ctx);
+	err = start_shell_exec(&pipe, cmd);
 	if (err)
 		return err;
 
@@ -733,7 +730,7 @@ int rnbd_resolve(const char *host, const char *hca, const char *port,
 		}
 	} while (read_success && cnt < len);
 
-	err = stop_shell_exec(pipe, ctx);
+	err = stop_shell_exec(pipe);
 	if (err) {
 		if (((err) < 0 && (err) >= -255))
 			return err;
@@ -769,7 +766,7 @@ int resolve_host(const char *from_name, struct path *path,
 }
 
 int hostname_from_path(char *host, int host_len, const char *hca, int port,
-		       const char *server_gid, const struct rnbd_ctx *ctx)
+		       const char *server_gid)
 {
 	int err = 0;
 	union gid_buffer val;
@@ -782,7 +779,7 @@ int hostname_from_path(char *host, int host_len, const char *hca, int port,
 	char *read_success = NULL;
 
 	if (strncmp(server_gid, "gid:", 4)) {
-		ERR(ctx->trm, "Destination address is not a GID '%s'\n", server_gid);
+		ERR(trm, "Destination address is not a GID '%s'\n", server_gid);
 		return -EINVAL;
 	}
 
@@ -794,7 +791,7 @@ int hostname_from_path(char *host, int host_len, const char *hca, int port,
 		 "saquery -C %s -P %d -U 0x%llx | awk '{ print $1 }'",
 		 hca, port, val.u64);
 
-	err = start_shell_exec(&pipe, cmd, ctx);
+	err = start_shell_exec(&pipe, cmd);
 	if (err)
 		return err;
 
@@ -807,7 +804,7 @@ int hostname_from_path(char *host, int host_len, const char *hca, int port,
 		}
 	} while (read_success);
 
-	err = stop_shell_exec(pipe, ctx);
+	err = stop_shell_exec(pipe);
 	if (!read_success) {
 		return -EINVAL;
 	} else if (err) {

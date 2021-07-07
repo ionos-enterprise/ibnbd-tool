@@ -28,6 +28,8 @@
 			printf(fmt, ##__VA_ARGS__); \
 	} while (0)
 
+bool trm;
+
 static struct rnbd_sess_dev **sds_clt;
 static struct rnbd_sess_dev **sds_srv;
 static struct rnbd_sess **sess_clt;
@@ -149,7 +151,7 @@ static int parse_from(int argc, const char *argv[],
 		      const struct param *param, struct rnbd_ctx *ctx)
 {
 	if (argc < 2) {
-		ERR(ctx->trm, "Please specify the destination to map from\n");
+		ERR(trm, "Please specify the destination to map from\n");
 		return 0;
 	}
 
@@ -303,7 +305,7 @@ static int parse_flag(int argc, const char *argv[],
 static void print_version(const struct rnbd_ctx *ctx)
 {
 	printf("%s version %s%s%s\n", ctx->pname,
-	       CLR(ctx->trm, CBLD, VERSION));
+	       CLR(trm, CBLD, VERSION));
 }
 
 static int parse_version(int argc, const char *argv[],
@@ -443,9 +445,6 @@ static struct param _params_minus_c =
 static struct param _params_minus_minus_complete =
 	{TOK_VERBOSE, "--complete", "", "", "Complete",
 	 NULL, parse_flag, NULL, offsetof(struct rnbd_ctx, complete_set)};
-static struct param _params_minus_minus_term =
-	{TOK_TERM, "--term", "", "", "Assume terminal output",
-	 NULL, parse_flag, NULL, offsetof(struct rnbd_ctx, trm)};
 static struct param _params_byte =
 	{TOK_BYTE, "B", "", "", "Byte", NULL, parse_unit, 0};
 static struct param _params_kib =
@@ -514,20 +513,20 @@ static const struct param *find_param(const char *str,
 }
 
 static  void usage_param(const char *str, struct param *const params[],
-			const struct rnbd_ctx *ctx)
+			 const struct rnbd_ctx *ctx)
 {
 	if (ctx->complete_set) {
 		for (; (*params)->param_str; params++)
 			printf("%s ", (*params)->param_str);
 		printf("\n");
 	} else {
-		printf("Usage: %s%s%s ", CLR(ctx->trm, CBLD, str));
+		printf("Usage: %s%s%s ", CLR(trm, CBLD, str));
 
-		clr_print(ctx->trm, CBLD, "%s", (*params)->param_str);
+		clr_print(trm, CBLD, "%s", (*params)->param_str);
 
 		while ((*++params)->param_str)
 			printf("|%s%s%s",
-			       CLR(ctx->trm, CBLD, (*params)->param_str));
+			       CLR(trm, CBLD, (*params)->param_str));
 
 		printf("\n\n");
 	}
@@ -551,8 +550,7 @@ static void print_param_descr(char *str)
 		print_opt(s->param_str, s->descr);
 }
 
-static void print_param(const char *str, struct param *const params[],
-			const struct rnbd_ctx *ctx)
+static void print_param(const char *str, struct param *const params[])
 {
 	do {
 		print_opt((*params)->param_str, (*params)->descr);
@@ -568,7 +566,7 @@ static void help_param(const char *str, struct param *const params[],
 }
 
 static void print_usage(const char *sub_name, struct param * const cmds[],
-			const struct rnbd_ctx *ctx)
+		        const struct rnbd_ctx *ctx)
 {
 	if (ctx->complete_set) {
 		for (; (*cmds)->param_str; cmds++)
@@ -577,16 +575,16 @@ static void print_usage(const char *sub_name, struct param * const cmds[],
 	} else {
 		if (sub_name)
 			printf("Usage: %s%s%s %s {",
-			       CLR(ctx->trm, CBLD, ctx->pname), sub_name);
+			       CLR(trm, CBLD, ctx->pname), sub_name);
 		else
 			printf("Usage: %s%s%s {",
-			       CLR(ctx->trm, CBLD, ctx->pname));
+			       CLR(trm, CBLD, ctx->pname));
 
-		clr_print(ctx->trm, CBLD, "%s", (*cmds)->param_str);
+		clr_print(trm, CBLD, "%s", (*cmds)->param_str);
 
 		while ((*++cmds)->param_str)
 			printf("|%s%s%s",
-			       CLR(ctx->trm, CBLD, (*cmds)->param_str));
+			       CLR(trm, CBLD, (*cmds)->param_str));
 
 		printf("} [ARGUMENTS]\n\n");
 	}
@@ -601,17 +599,17 @@ static bool help_print_flags(const struct rnbd_ctx *ctx)
 }
 
 static void cmd_print_usage_short(const struct param *cmd, const char *a,
-			    const struct rnbd_ctx *ctx)
+				  const struct rnbd_ctx *ctx)
 {
 	if (a && *a)
 		printf("Usage: %s%s%s %s%s%s %s%s%s",
-		       CLR(ctx->trm, CBLD, ctx->pname),
-		       CLR(ctx->trm, CBLD, a),
-		       CLR(ctx->trm, CBLD, cmd->param_str));
+		       CLR(trm, CBLD, ctx->pname),
+		       CLR(trm, CBLD, a),
+		       CLR(trm, CBLD, cmd->param_str));
 	else
 		printf("Usage: %s%s%s %s%s%s",
-		       CLR(ctx->trm, CBLD, ctx->pname),
-		       CLR(ctx->trm, CBLD, cmd->param_str));
+		       CLR(trm, CBLD, ctx->pname),
+		       CLR(trm, CBLD, cmd->param_str));
 
 	if (cmd->params)
 		printf(" %s", cmd->params);
@@ -686,14 +684,14 @@ static void print_fields(const struct rnbd_ctx *ctx,
 {
 	switch (mode) {
 	case RNBD_SERVER:
-		table_tbl_print_term(HPRE, srv_all, ctx->trm, ctx);
+		table_tbl_print_term(HPRE, srv_all, trm, ctx);
 		break;
 	case RNBD_CLIENT:
-		table_tbl_print_term(HPRE, clt_all, ctx->trm, ctx);
+		table_tbl_print_term(HPRE, clt_all, trm, ctx);
 		break;
 	case RNBD_BOTH:
 	case RNBD_NONE:
-		table_tbl_print_term(HPRE, all, ctx->trm, ctx);
+		table_tbl_print_term(HPRE, all, trm, ctx);
 		break;
 	}
 	if (mode != RNBD_SERVER) {
@@ -719,7 +717,7 @@ static void help_dump_all(const char *program_name,
 	help_fields();
 
 	printf("%s%s%s%s\n", HPRE,
-	       CLR(ctx->trm, CDIM, "Device Fields"));
+	       CLR(trm, CDIM, "Device Fields"));
 	print_fields(ctx, def_clms_devices_clt,
 		     def_clms_devices_srv,
 		     all_clms_devices_clt,
@@ -727,7 +725,7 @@ static void help_dump_all(const char *program_name,
 		     all_clms_devices, RNBD_BOTH);
 
 	printf("%s%s%s%s\n", HPRE,
-	       CLR(ctx->trm, CDIM, "Session Fields"));
+	       CLR(trm, CDIM, "Session Fields"));
 	print_fields(ctx, def_clms_sessions_clt,
 		     def_clms_sessions_srv,
 		     all_clms_sessions_clt,
@@ -735,7 +733,7 @@ static void help_dump_all(const char *program_name,
 		     all_clms_sessions, RNBD_BOTH);
 
 	printf("%s%s%s%s\n", HPRE,
-	       CLR(ctx->trm, CDIM, "Path Fields"));
+	       CLR(trm, CDIM, "Path Fields"));
 	print_fields(ctx, def_clms_paths_clt,
 		     def_clms_paths_srv,
 		     all_clms_paths_clt,
@@ -896,7 +894,7 @@ static int list_devices(struct rnbd_sess_dev **d_clt, int d_clt_cnt,
 		if ((d_clt_cnt && d_srv_cnt && !ctx->noheaders_set)
 		    || (d_clt_cnt && is_dump))
 			printf("%s%s%s\n",
-			       CLR(ctx->trm, CDIM, "Imported devices"));
+			       CLR(trm, CDIM, "Imported devices"));
 
 		if (d_clt_cnt)
 			list_devices_term(d_clt, ctx->clms_devices_clt, ctx);
@@ -907,7 +905,7 @@ static int list_devices(struct rnbd_sess_dev **d_clt, int d_clt_cnt,
 		if ((d_clt_cnt && d_srv_cnt && !ctx->noheaders_set)
 		    || (d_srv_cnt && is_dump))
 			printf("%s%s%s\n",
-			       CLR(ctx->trm, CDIM, "Exported devices"));
+			       CLR(trm, CDIM, "Exported devices"));
 
 		if (d_srv_cnt)
 			list_devices_term(d_srv, ctx->clms_devices_srv, ctx);
@@ -980,7 +978,7 @@ static int list_sessions(struct rnbd_sess **s_clt, int clt_s_num,
 		if ((clt_s_num && srv_s_num && !ctx->noheaders_set)
 		    || (clt_s_num && is_dump))
 			printf("%s%s%s\n",
-			       CLR(ctx->trm, CDIM, "Outgoing sessions"));
+			       CLR(trm, CDIM, "Outgoing sessions"));
 
 		if (clt_s_num)
 			list_sessions_term(s_clt, ctx->clms_sessions_clt, ctx);
@@ -991,7 +989,7 @@ static int list_sessions(struct rnbd_sess **s_clt, int clt_s_num,
 		if ((clt_s_num && srv_s_num && !ctx->noheaders_set)
 		    || (srv_s_num && is_dump))
 			printf("%s%s%s\n",
-			       CLR(ctx->trm, CDIM, "Incoming sessions"));
+			       CLR(trm, CDIM, "Incoming sessions"));
 
 		if (srv_s_num)
 			list_sessions_term(s_srv, ctx->clms_sessions_srv, ctx);
@@ -1061,7 +1059,7 @@ static int list_paths(struct rnbd_path **p_clt, int clt_p_num,
 		if ((clt_p_num && srv_p_num && !ctx->noheaders_set)
 		    || (clt_p_num && is_dump))
 			printf("%s%s%s\n",
-			       CLR(ctx->trm, CDIM, "Outgoing paths"));
+			       CLR(trm, CDIM, "Outgoing paths"));
 
 		if (clt_p_num)
 			list_paths_term(p_clt, clt_p_num,
@@ -1074,7 +1072,7 @@ static int list_paths(struct rnbd_path **p_clt, int clt_p_num,
 		if ((clt_p_num && srv_p_num && !ctx->noheaders_set)
 		    || (srv_p_num && is_dump))
 			printf("%s%s%s\n",
-			       CLR(ctx->trm, CDIM, "Incoming paths"));
+			       CLR(trm, CDIM, "Incoming paths"));
 
 		if (srv_p_num)
 			list_paths_term(p_srv, srv_p_num,
@@ -1160,8 +1158,8 @@ static int show_device(struct rnbd_sess_dev **clt, struct rnbd_sess_dev **srv,
 	case FMT_TERM:
 	default:
 		table_row_stringify(ds[0], flds, cs, ctx, true, 0);
-		table_entry_print_term("", flds, cs, table_get_max_h_width(cs),
-				       ctx->trm);
+		table_entry_print_term("", flds, cs,
+				       table_get_max_h_width(cs), trm);
 		break;
 	}
 
@@ -1464,7 +1462,7 @@ static int show_path(struct rnbd_path **pp_clt, struct rnbd_path **pp_srv,
 	default:
 		table_row_stringify(pp[0], flds, cs, ctx, true, 0);
 		table_entry_print_term("", flds, cs,
-				       table_get_max_h_width(cs), ctx->trm);
+				       table_get_max_h_width(cs), trm);
 		break;
 	}
 
@@ -1503,7 +1501,7 @@ static int show_session(struct rnbd_sess **ss_clt, struct rnbd_sess **ss_srv,
 	default:
 		table_row_stringify(ss[0], flds, cs, ctx, true, 0);
 		table_entry_print_term("", flds, cs,
-				       table_get_max_h_width(cs), ctx->trm);
+				       table_get_max_h_width(cs), trm);
 
 		/* when notree is set explicitly or if exactly one collumn */
 		/* is requested */
@@ -1511,10 +1509,10 @@ static int show_session(struct rnbd_sess **ss_clt, struct rnbd_sess **ss_srv,
 		if (ctx->notree_set || table_clm_cnt(cs) == 1)
 			break;
 
-		printf("%s%s%s", CLR(ctx->trm, CBLD, ss[0]->sessname));
+		printf("%s%s%s", CLR(trm, CBLD, ss[0]->sessname));
 		if (ss[0]->side == RNBD_CLIENT)
 			printf(" %s(%s)%s",
-			       CLR(ctx->trm, CBLD, ss[0]->mp_short));
+			       CLR(trm, CBLD, ss[0]->mp_short));
 		printf("\n");
 		list_paths_term(ss[0]->paths, ss[0]->path_cnt, ps, 1, ctx,
 				compar_paths_hca_src);
@@ -1548,7 +1546,7 @@ static int show_all(const char *name, struct rnbd_ctx *ctx)
 	    (sess_srv_cnt && !ss_srv) ||
 	    (sds_clt_cnt && !ds_clt) ||
 	    (sds_srv_cnt && !ds_srv)) {
-		ERR(ctx->trm, "Failed to alloc memory\n");
+		ERR(trm, "Failed to alloc memory\n");
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1559,7 +1557,7 @@ static int show_all(const char *name, struct rnbd_ctx *ctx)
 		session_name = NULL;
 		path_name = name;
 		if (ctx->path_cnt > 1)
-			ERR(ctx->trm, "Multiple paths specified\n");
+			ERR(trm, "Multiple paths specified\n");
 	}
 	c_pp = find_paths_all(session_name, path_name, ctx,
 			      pp_clt, &c_pp_clt, pp_srv,
@@ -1572,7 +1570,7 @@ static int show_all(const char *name, struct rnbd_ctx *ctx)
 				     &c_ds_clt, ds_srv, &c_ds_srv);
 	if ((ctx->path_cnt == 1 && c_pp > 1)
 	    || (ctx->path_cnt != 1 && c_pp + c_ss + c_ds > 1)) {
-		ERR(ctx->trm, "Multiple entries match '%s'\n", name);
+		ERR(trm, "Multiple entries match '%s'\n", name);
 
 		list_default(ctx);
 
@@ -1596,7 +1594,7 @@ static int show_all(const char *name, struct rnbd_ctx *ctx)
 	}
 
 	if (ctx->path_cnt == 1 && c_ss + c_ds > 0)
-		ERR(ctx->trm, "Provided path ignored!\n");
+		ERR(trm, "Provided path ignored!\n");
 
 	if (c_ds)
 		ret = show_device(ds_clt, ds_srv, ctx);
@@ -1605,7 +1603,7 @@ static int show_all(const char *name, struct rnbd_ctx *ctx)
 	else if (c_pp)
 		ret = show_path(pp_clt, pp_srv, ctx);
 	else {
-		ERR(ctx->trm, "There is no entry matching '%s'\n", name);
+		ERR(trm, "There is no entry matching '%s'\n", name);
 		ret = -ENOENT;
 	}
 out:
@@ -1628,14 +1626,14 @@ static int show_devices(const char *name, struct rnbd_ctx *ctx)
 
 	if ((sds_clt_cnt && !ds_clt) ||
 	    (sds_srv_cnt && !ds_srv)) {
-		ERR(ctx->trm, "Failed to alloc memory\n");
+		ERR(trm, "Failed to alloc memory\n");
 		ret = -ENOMEM;
 		goto out;
 	}
 	c_ds = find_devs_all(name, ctx->rnbdmode, ds_clt,
 			     &c_ds_clt, ds_srv, &c_ds_srv);
 	if (c_ds > 1) {
-		ERR(ctx->trm, "Multiple devices match '%s'\n", name);
+		ERR(trm, "Multiple devices match '%s'\n", name);
 
 		list_default(ctx);
 
@@ -1649,7 +1647,7 @@ static int show_devices(const char *name, struct rnbd_ctx *ctx)
 	if (c_ds) {
 		ret = show_device(ds_clt, ds_srv, ctx);
 	} else {
-		ERR(ctx->trm, "There is no device matching '%s'\n", name);
+		ERR(trm, "There is no device matching '%s'\n", name);
 		ret = -ENOENT;
 	}
 out:
@@ -1666,7 +1664,7 @@ static int show_client_sessions(const char *name, struct rnbd_ctx *ctx)
 	ss_clt = calloc(sess_clt_cnt, sizeof(*ss_clt));
 
 	if (sess_clt_cnt && !ss_clt) {
-		ERR(ctx->trm, "Failed to alloc memory\n");
+		ERR(trm, "Failed to alloc memory\n");
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1677,7 +1675,7 @@ static int show_client_sessions(const char *name, struct rnbd_ctx *ctx)
 		c_ss_clt = find_sess_match(name, ctx->rnbdmode, sess_clt, ss_clt);
 
 	if (c_ss_clt > 1) {
-		ERR(ctx->trm, "Multiple sessions match '%s'\n", name);
+		ERR(trm, "Multiple sessions match '%s'\n", name);
 
 		list_default(ctx);
 
@@ -1691,7 +1689,7 @@ static int show_client_sessions(const char *name, struct rnbd_ctx *ctx)
 	if (c_ss_clt) {
 		ret = show_session(ss_clt, NULL, ctx);
 	} else {
-		ERR(ctx->trm, "There is no session matching '%s'\n", name);
+		ERR(trm, "There is no session matching '%s'\n", name);
 		ret = -ENOENT;
 	}
 out:
@@ -1707,7 +1705,7 @@ static int show_server_sessions(const char *name, struct rnbd_ctx *ctx)
 	ss_srv = calloc(sess_srv_cnt, sizeof(*ss_srv));
 
 	if (sess_srv_cnt && !ss_srv) {
-		ERR(ctx->trm, "Failed to alloc memory\n");
+		ERR(trm, "Failed to alloc memory\n");
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1718,7 +1716,7 @@ static int show_server_sessions(const char *name, struct rnbd_ctx *ctx)
 		c_ss_srv = find_sess_match(name, ctx->rnbdmode, sess_srv, ss_srv);
 
 	if (c_ss_srv > 1) {
-		ERR(ctx->trm, "Multiple sessions match '%s'\n", name);
+		ERR(trm, "Multiple sessions match '%s'\n", name);
 
 		list_default(ctx);
 
@@ -1732,7 +1730,7 @@ static int show_server_sessions(const char *name, struct rnbd_ctx *ctx)
 	if (c_ss_srv) {
 		ret = show_session(NULL, ss_srv, ctx);
 	} else {
-		ERR(ctx->trm, "There is no session matching '%s'\n", name);
+		ERR(trm, "There is no session matching '%s'\n", name);
 		ret = -ENOENT;
 	}
 out:
@@ -1752,7 +1750,7 @@ static int show_both_sessions(const char *name, struct rnbd_ctx *ctx)
 
 	if ((sess_clt_cnt && !ss_clt)
 	    || (sess_srv_cnt && !ss_srv)) {
-		ERR(ctx->trm, "Failed to alloc memory\n");
+		ERR(trm, "Failed to alloc memory\n");
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1770,7 +1768,7 @@ static int show_both_sessions(const char *name, struct rnbd_ctx *ctx)
 	}
 
 	if (c_ss_clt + c_ss_srv > 1) {
-		ERR(ctx->trm, "Multiple sessions match '%s'\n", name);
+		ERR(trm, "Multiple sessions match '%s'\n", name);
 
 		list_default(ctx);
 
@@ -1786,7 +1784,7 @@ static int show_both_sessions(const char *name, struct rnbd_ctx *ctx)
 	} else if (c_ss_srv) {
 		ret = show_session(NULL, ss_srv, ctx);
 	} else {
-		ERR(ctx->trm, "There is no session matching '%s'\n", name);
+		ERR(trm, "There is no session matching '%s'\n", name);
 		ret = -ENOENT;
 	}
 out:
@@ -1806,7 +1804,7 @@ static int show_paths(const char *name, struct rnbd_ctx *ctx)
 
 	if ((paths_clt_cnt && !pp_clt) ||
 	    (paths_srv_cnt && !pp_srv)) {
-		ERR(ctx->trm, "Failed to alloc memory\n");
+		ERR(trm, "Failed to alloc memory\n");
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1820,14 +1818,14 @@ static int show_paths(const char *name, struct rnbd_ctx *ctx)
 		session_name = NULL;
 		path_name = name;
 		if (ctx->path_cnt > 1)
-			ERR(ctx->trm, "Multiple paths specified\n");
+			ERR(trm, "Multiple paths specified\n");
 	}
 	c_pp = find_paths_all(session_name, path_name, ctx, pp_clt,
 			      &c_pp_clt, pp_srv, &c_pp_srv);
 
 	if (c_pp > 1) {
 
-		ERR(ctx->trm, "Multiple paths match '%s'\n", name);
+		ERR(trm, "Multiple paths match '%s'\n", name);
 
 		list_default(ctx);
 
@@ -1844,9 +1842,9 @@ static int show_paths(const char *name, struct rnbd_ctx *ctx)
 			ret = -EINVAL;
 	} else {
 		if (session_name)
-			ERR(ctx->trm, "There is no path matching '%s %s'\n", session_name, path_name);
+			ERR(trm, "There is no path matching '%s %s'\n", session_name, path_name);
 		else
-			ERR(ctx->trm, "There is no path matching '%s'\n", path_name);
+			ERR(trm, "There is no path matching '%s'\n", path_name);
 		ret = -ENOENT;
 	}
 out:
@@ -1867,7 +1865,7 @@ static int parse_name_help(int argc, const char *argv[], const char *what,
 		else
 			word = what;
 		cmd_print_usage_short(cmd, what, ctx);
-		ERR(ctx->trm, "Please specify the %s argument\n", word);
+		ERR(trm, "Please specify the %s argument\n", word);
 		return -EINVAL;
 	}
 	if (!strcmp(*argv, "help")) {
@@ -2095,8 +2093,8 @@ static struct rnbd_sess *find_single_session(const char *session_name,
 	int match_count;
 
 	if (!sess_cnt) {
-		ERR(ctx->trm,
-		    "Session '%s' not found: no sessions open\n", session_name);
+		ERR(trm, "Session '%s' not found: no sessions open\n",
+		    session_name);
 		return NULL;
 	}
 
@@ -2108,7 +2106,7 @@ static struct rnbd_sess *find_single_session(const char *session_name,
 	matching_sess = calloc(sess_cnt, sizeof(*matching_sess));
 
 	if (sess_cnt && !matching_sess) {
-		ERR(ctx->trm, "Failed to alloc memory\n");
+		ERR(trm, "Failed to alloc memory\n");
 		return NULL;
 	}
 	match_count = find_sess_match(session_name, ctx->rnbdmode, sessions,
@@ -2117,7 +2115,7 @@ static struct rnbd_sess *find_single_session(const char *session_name,
 	if (match_count == 1) {
 		res = *matching_sess;
 	} else if (print_err) {
-		ERR(ctx->trm, "%s '%s'.\n",
+		ERR(trm, "%s '%s'.\n",
 		    (match_count > 1)  ?
 			"Please specify the session uniquely. There are multiple sessions matching"
 			: "No session found matching",
@@ -2140,8 +2138,7 @@ static struct rnbd_path *find_single_path(const char *session_name,
 
 	if (!path_cnt) {
 		if (print_err)
-			ERR(ctx->trm,
-			    "Path '%s' not found: there exists no paths\n",
+			ERR(trm, "Path '%s' not found: there exists no paths\n",
 			    path_name);
 		return NULL;
 	}
@@ -2149,7 +2146,7 @@ static struct rnbd_path *find_single_path(const char *session_name,
 	matching_paths = calloc(path_cnt, sizeof(*matching_paths));
 
 	if (path_cnt && !matching_paths) {
-		ERR(ctx->trm, "Failed to alloc memory\n");
+		ERR(trm, "Failed to alloc memory\n");
 		return NULL;
 	}
 	match_count = find_paths(session_name, path_name, ctx, paths, matching_paths);
@@ -2169,13 +2166,13 @@ static struct rnbd_path *find_single_path(const char *session_name,
 	} else {
 		if (print_err) {
 			if (path_name)
-				ERR(ctx->trm, "%s '%s'.\n",
+				ERR(trm, "%s '%s'.\n",
 				    (match_count > 1)  ?
 				    "Please specify the path uniquely. There are multiple paths matching"
 				    : "No path found matching",
 				    path_name);
 			else
-				ERR(ctx->trm, "%s '%s'.\n",
+				ERR(trm, "%s '%s'.\n",
 				    "Please specify the path for session",
 				    session_name);
 		}
@@ -2186,7 +2183,6 @@ static struct rnbd_path *find_single_path(const char *session_name,
 }
 
 static struct rnbd_path *find_first_path_for_session(const char *session_name,
-						     struct rnbd_ctx *ctx,
 						     struct rnbd_path **paths,
 						     int path_cnt)
 {
@@ -2194,8 +2190,7 @@ static struct rnbd_path *find_first_path_for_session(const char *session_name,
 	int match_count;
 
 	if (!path_cnt) {
-		ERR(ctx->trm,
-		    "Path '%s' not found: there exists no paths\n",
+		ERR(trm, "Path '%s' not found: there exists no paths\n",
 		    session_name);
 		return NULL;
 	}
@@ -2203,7 +2198,7 @@ static struct rnbd_path *find_first_path_for_session(const char *session_name,
 	matching_paths = calloc(path_cnt, sizeof(*matching_paths));
 
 	if (path_cnt && !matching_paths) {
-		ERR(ctx->trm, "Failed to alloc memory\n");
+		ERR(trm, "Failed to alloc memory\n");
 		return NULL;
 	}
 	match_count = find_paths_for_session(session_name, paths, matching_paths);
@@ -2237,7 +2232,7 @@ static int client_devices_map(const char *from_name, const char *device_name,
 			    sess->sessname, ctx->paths[0].dst);
 			strcpy(sessname, sess->sessname);
 		} else {
-			ERR(ctx->trm,
+			ERR(trm,
 			    "Client session for path '%s' not found. Please provide a session name to establish a new session.\n",
 			    ctx->paths[0].dst);
 			return -EINVAL;
@@ -2265,7 +2260,7 @@ static int client_devices_map(const char *from_name, const char *device_name,
 				ret = sessname_from_host(from_name,
 							 sessname, sizeof(sessname));
 				if (ret) {
-					ERR(ctx->trm,
+					ERR(trm,
 					    "Failed to generate session name for %s: %s (%d)\n",
 					    from_name, strerror(-ret), ret);
 					return ret;
@@ -2299,7 +2294,7 @@ static int client_devices_map(const char *from_name, const char *device_name,
 		    from_name);
 	}
 	if (!sess && !ctx->path_cnt) {
-		ERR(ctx->trm,
+		ERR(trm,
 		    "No client session '%s' found and '%s' can not be resolved as host name.\n"
 		    "Please provide a host name or at least one path to establish a new session.\n",
 		    from_name, from_name);
@@ -2334,10 +2329,10 @@ static int client_devices_map(const char *from_name, const char *device_name,
 			   "map_device", ctx, "%s", cmd);
 	if (ret)
 		if (ctx->sysfs_avail)
-			ERR(ctx->trm, "Failed to map device: %s (%d)\n",
+			ERR(trm, "Failed to map device: %s (%d)\n",
 			    strerror(-ret), ret);
 		else
-			ERR(ctx->trm, "Failed to map device: modules not loaded.\n");
+			ERR(trm, "Failed to map device: modules not loaded.\n");
 	else
 		INF(ctx->verbose_set, "Successfully mapped '%s' from '%s'.\n",
 		    device_name, from_name ? from_name : sessname);
@@ -2354,14 +2349,14 @@ static struct rnbd_sess_dev *find_single_device(const char *name,
 	int match_count;
 
 	if (!dev_cnt) {
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Device '%s' not found: no devices mapped\n", name);
 		return NULL;
 	}
 
 	matching_devs = calloc(dev_cnt, sizeof(*matching_devs));
 	if (!matching_devs) {
-		ERR(ctx->trm, "Failed to allocate memory\n");
+		ERR(trm, "Failed to allocate memory\n");
 		return NULL;
 	}
 
@@ -2370,7 +2365,7 @@ static struct rnbd_sess_dev *find_single_device(const char *name,
 
 		res = matching_devs[0];
 	} else if (print_err) {
-		ERR(ctx->trm, "%s '%s'.\n",
+		ERR(trm, "%s '%s'.\n",
 		    (match_count > 1)  ?
 			"Please specify an unique device. There are multiple devices matching"
 			: "Did not found device",
@@ -2396,7 +2391,7 @@ static int client_devices_resize(const char *device_name, uint64_t size_sect,
 		get_sysfs_info(ctx)->path_dev_name);
 	ret = printf_sysfs(tmp, "resize", ctx, "%" PRIu64, size_sect);
 	if (ret)
-		ERR(ctx->trm, "Failed to resize %s to %" PRIu64 ": %s (%d)\n",
+		ERR(trm, "Failed to resize %s to %" PRIu64 ": %s (%d)\n",
 		    ds->dev->devname, size_sect, strerror(-ret), ret);
 	else
 		INF(ctx->verbose_set,
@@ -2455,7 +2450,7 @@ static int _client_devices_unmap(const struct rnbd_sess_dev *ds, bool force,
 	ret = printf_sysfs(tmp, "unmap_device", ctx, "%s",
 			   force ? "force" : "normal");
 	if (ret)
-		ERR(ctx->trm, "Failed to %sunmap '%s': %s (%d)\n",
+		ERR(trm, "Failed to %sunmap '%s': %s (%d)\n",
 		    force ? "force-" : "",
 		    ds->dev->devname, strerror(-ret), ret);
 	else
@@ -2493,7 +2488,7 @@ static int client_device_remap(const struct rnbd_dev *dev,
 		    dev->devname);
 		ret = 0;
 	} else if (ret) {
-		ERR(ctx->trm, "Failed to remap %s: %s (%d)\n",
+		ERR(trm, "Failed to remap %s: %s (%d)\n",
 		    dev->devname, strerror(-ret), ret);
 	} else {
 		INF(ctx->verbose_set,
@@ -2524,10 +2519,10 @@ static int client_session_remap(const char *session_name,
 	char cmd[4096];
 
 	if (!ctx->sysfs_avail)
-		ERR(ctx->trm, "Not possible to remap devices: modules not loaded.\n");
+		ERR(trm, "Not possible to remap devices: modules not loaded.\n");
 
 	if (!sds_clt_cnt) {
-		ERR(ctx->trm,
+		ERR(trm,
 		    "No devices mapped. Nothing to be done!\n");
 		return -EINVAL;
 	}
@@ -2554,7 +2549,7 @@ static int client_session_remap(const char *session_name,
 			tmp_err = _client_devices_unmap((*sds_iter), 0, ctx);
 			/*  intentional continue on error */
 			if (tmp_err)
-				ERR(ctx->trm, "Failed to unmap device: %s, %s (%d)\n",
+				ERR(trm, "Failed to unmap device: %s, %s (%d)\n",
 				    (*sds_iter)->dev->devname, strerror(-tmp_err), tmp_err);
 		}
 	}
@@ -2579,7 +2574,7 @@ static int client_session_remap(const char *session_name,
 					       "map_device", ctx, "%s", cmd);
 			
 			if (tmp_err) {
-				ERR(ctx->trm, "Failed to map device: %s (%d)\n",
+				ERR(trm, "Failed to map device: %s (%d)\n",
 				    strerror(-tmp_err), tmp_err);
 				if (!err)
 					err = tmp_err;
@@ -2606,7 +2601,7 @@ static int session_do_all_paths(enum rnbdmode mode,
 	if (!(mode == RNBD_CLIENT ?
 	      sess_clt_cnt
 	      : sess_srv_cnt)) {
-		ERR(ctx->trm,
+		ERR(trm,
 		    "No sessions opened!\n");
 		return -EINVAL;
 	}
@@ -2890,7 +2885,7 @@ static int client_session_add(const char *session_name,
 	sess = find_sess(session_name, sess_clt);
 
 	if (!sess) {
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Session '%s' does not exists.\n", session_name);
 		return -EINVAL;
 	}
@@ -2906,7 +2901,7 @@ static int client_session_add(const char *session_name,
 
 	ret = printf_sysfs(sysfs_path, "add_path", ctx, "%s", address_string);
 	if (ret)
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Failed to add path '%s' to session '%s': %s (%d)\n",
 		    address_string, sess->sessname, strerror(-ret), ret);
 	else
@@ -2975,7 +2970,7 @@ static int client_path_do(const char *session_name,
 
 	ret = printf_sysfs(sysfs_path, sysfs_entry, ctx, "1");
 	if (ret)
-		ERR(ctx->trm, message_fail, path->pathname,
+		ERR(trm, message_fail, path->pathname,
 		    path->sess->sessname, strerror(-ret), ret);
 	else
 		INF(ctx->verbose_set, message_success,
@@ -3010,7 +3005,7 @@ static int client_path_recover(const char *session_name,
 	struct rnbd_path *path;
 
 	if (!session_name && !strcmp(path_name, "all")) {
-		ERR(ctx->trm, "Please provide session to recover all paths for\n");
+		ERR(trm, "Please provide session to recover all paths for\n");
 		return -EINVAL;
 	} else if (session_name && !strcmp(path_name, "all")) {
 		path = find_single_path(session_name, path_name, ctx, paths_clt,
@@ -3075,7 +3070,7 @@ static int client_path_readd(const char *session_name,
 
 	ret = printf_sysfs(sysfs_path, "remove_path", ctx, "1");
 	if (ret) {
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Failed to remove path '%s' from session '%s': %s (%d)\n",
 		    path->pathname,
 		    path->sess->sessname, strerror(-ret), ret);
@@ -3096,7 +3091,7 @@ static int client_path_readd(const char *session_name,
 		ret = printf_sysfs(sysfs_path, "add_path", ctx, "%s@%s", path->src_addr, path->dst_addr);
 	}
 	if (ret)
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Failed to readd path '%s' to session '%s': %s (%d)\n",
 		    path->sess->sessname, path->pathname, strerror(-ret), ret);
 	else
@@ -3126,7 +3121,7 @@ static int server_path_disconnect(const char *session_name,
 
 	ret = printf_sysfs(sysfs_path, "disconnect", ctx, "1");
 	if (ret)
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Failed to disconnect path '%s' of session '%s': %s (%d)\n",
 		    path->pathname,
 		    path->sess->sessname, strerror(-ret), ret);
@@ -3150,7 +3145,7 @@ static int server_devices_force_close(const char *device_name,
 
 	ret = printf_sysfs(sysfs_path, "force_close", ctx, "1");
 	if (ret)
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Failed to close device '%s' for session '%s': %s (%d)\n",
 		    device_name, session_name,
 		    strerror(-ret), ret);
@@ -3381,7 +3376,6 @@ static struct param *params_flags[] = {
 	&_params_minus_s,
 	&_params_minus_c,
 	&_params_minus_minus_complete,
-	&_params_minus_minus_term,
 	&_params_minus_minus_version,
 	&_params_null
 };
@@ -3391,7 +3385,6 @@ static struct param *params_flags_help[] = {
 	&_params_minus_minus_verbose,
 	&_params_minus_minus_debug,
 	&_params_minus_minus_simulate,
-	&_params_minus_minus_term,
 	&_params_null
 };
 
@@ -3764,13 +3757,12 @@ static int param_compare(const void *p1, const void *p2)
 				  (*c1)->param_str, (*c2)->param_str);
 }
 
-static void handle_unknown_param(const char *param, struct param *params[],
-				 const struct rnbd_ctx *ctx)
+static void handle_unknown_param(const char *param, struct param *params[])
 {
 	struct param **cs;
 	size_t len = 0, cnt = 0, i;
 
-	ERR(ctx->trm, "Unknown '%s'\n", param);
+	ERR(trm, "Unknown '%s'\n", param);
 
 	for (cs = params; (*cs)->param_str; cs++) {
 		(*cs)->dist = levenshtein((*cs)->param_str, param, 1, 2, 1, 0)
@@ -3987,7 +3979,7 @@ static void init_rnbd_ctx(struct rnbd_ctx *ctx)
 
 	list_default(ctx);
 
-	ctx->trm = (isatty(STDOUT_FILENO) == 1);
+	trm = (isatty(STDOUT_FILENO) == 1);
 }
 
 static void deinit_rnbd_ctx(struct rnbd_ctx *ctx)
@@ -4135,7 +4127,7 @@ int parse_list_parameters(int argc, const char *argv[], struct rnbd_ctx *ctx,
 		cmd->help(program_name, cmd, ctx);
 		err = -EAGAIN;
 	} else if (err == -EINVAL) {
-		handle_unknown_param(*argv, params_list_parameters, ctx);
+		handle_unknown_param(*argv, params_list_parameters);
 	}
 	return err < 0 ? err : start_argc - argc;
 }
@@ -4296,7 +4288,7 @@ int check_root(const struct rnbd_ctx *ctx)
 		return err;
 	}
 	if (uid != 0) {
-		ERR(ctx->trm, "Modifying operations require root permission.\n");
+		ERR(trm, "Modifying operations require root permission.\n");
 		err = -EPERM;
 	}
 	return err;
@@ -4319,7 +4311,7 @@ int cmd_map(int argc, const char *argv[], const struct param *cmd,
 	if (!ctx->from_set && ctx->path_cnt == 0) {
 
 		cmd_print_usage_short(cmd, help_context, ctx);
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Please specify the destination to map from\n");
 
 		return -EINVAL;
@@ -4328,8 +4320,7 @@ int cmd_map(int argc, const char *argv[], const struct param *cmd,
 
 	if (argc > 0 || (err < 0 && err != -EAGAIN)) {
 
-		handle_unknown_param(*argv,
-				     params_map_parameters_help_tail, ctx);
+		handle_unknown_param(*argv, params_map_parameters_help_tail);
 
 		return -EINVAL;
 	}
@@ -4357,13 +4348,13 @@ int cmd_resize(int argc, const char *argv[], const struct param *cmd,
 		cmd_print_usage_short(cmd, help_context, ctx);
 
 		if (err == -ENOENT)
-			ERR(ctx->trm,
+			ERR(trm,
 			    "Please provide a valid unit for size of the device to be configured\n");
 		else if (ctx->sign < 0)
-			ERR(ctx->trm,
+			ERR(trm,
 			    "Please provide a positiv value for size of the device to be configured\n");
 		else
-			ERR(ctx->trm,
+			ERR(trm,
 			    "Please provide the size of the device to be configured\n");
 
 		return err == 0 ? -EINVAL : err;
@@ -4381,7 +4372,7 @@ int cmd_resize(int argc, const char *argv[], const struct param *cmd,
 			} else {
 				cmd_print_usage_short(cmd, help_context, ctx);
 
-				ERR(ctx->trm,
+				ERR(trm,
 				    "Please provide a valid unit for size of device to be configured\n");
 				return err;
 			}
@@ -4395,7 +4386,7 @@ int cmd_resize(int argc, const char *argv[], const struct param *cmd,
 
 	if (argc > 0) {
 
-		handle_unknown_param(*argv, params_default, ctx);
+		handle_unknown_param(*argv, params_default);
 		return -EINVAL;
 	}
 	err = check_root(ctx);
@@ -4423,8 +4414,7 @@ int cmd_unmap(int argc, const char *argv[], const struct param *cmd,
 
 	if (argc > 0) {
 
-		handle_unknown_param(*argv,
-				     params_unmap_parameters, ctx);
+		handle_unknown_param(*argv, params_unmap_parameters);
 		return -EINVAL;
 	}
 	err = check_root(ctx);
@@ -4451,7 +4441,7 @@ int cmd_remap(int argc, const char *argv[], const struct param *cmd,
 
 	if (argc > 0) {
 
-		handle_unknown_param(*argv, params_default, ctx);
+		handle_unknown_param(*argv, params_default);
 		return -EINVAL;
 	}
 	err = check_root(ctx);
@@ -4483,7 +4473,7 @@ int cmd_close_device(int argc, const char *argv[], const struct param *cmd,
 
 	if (argc > 0) {
 
-		handle_unknown_param(*argv, params_default, ctx);
+		handle_unknown_param(*argv, params_default);
 		return -EINVAL;
 	}
 
@@ -4514,7 +4504,7 @@ int cmd_client_recover_device(int argc, const char *argv[],
 	argc -= err; argv += err; err = 0;
 
 	if (argc > 0) {
-		handle_unknown_param(*argv, params_default, ctx);
+		handle_unknown_param(*argv, params_default);
 		return -EINVAL;
 	}
 
@@ -4549,7 +4539,7 @@ int cmd_client_recover_device(int argc, const char *argv[],
 	}
 
 	if (err)
-		ERR(ctx->trm, "Failed to recover device: %s (%d)\n",
+		ERR(trm, "Failed to recover device: %s (%d)\n",
 		    strerror(-err), err);
 
 	return err;
@@ -4573,7 +4563,7 @@ int cmd_session_remap(int argc, const char *argv[], const struct param *cmd,
 
 	if (argc > 0) {
 
-		handle_unknown_param(*argv, params_default, ctx);
+		handle_unknown_param(*argv, params_default);
 		return -EINVAL;
 	}
 	err = check_root(ctx);
@@ -4599,7 +4589,7 @@ int cmd_path_add(int argc, const char *argv[], const struct param *cmd,
 	if (accepted == 0) {
 
 		cmd_print_usage_short(cmd, help_context, ctx);
-		ERR(ctx->trm,
+		ERR(trm,
 		    ":Please specify the path to add to session %s\n",
 		    ctx->name);
 		print_opt(_params_path_param.param_str,
@@ -4610,25 +4600,23 @@ int cmd_path_add(int argc, const char *argv[], const struct param *cmd,
 
 	if (argc > 0 || (err < 0 && err != -EAGAIN)) {
 
-		handle_unknown_param(*argv,
-				     params_add_path_help, ctx);
+		handle_unknown_param(*argv, params_add_path_help);
 		if (err < 0) {
 			printf("\n");
 			print_param(ctx->pname,
-				    params_add_path_help,
-				    ctx);
+				    params_add_path_help);
 		}
 		return -EINVAL;
 	}
 	if (ctx->path_cnt <= 0) {
 		cmd_print_usage_short(cmd, help_context, ctx);
-		ERR(ctx->trm,
+		ERR(trm,
 		    "No valid path provided. Please provide a path to add to session '%s'.\n",
 		    ctx->name);
 	}
 	if (ctx->path_cnt > 1) {
 		cmd_print_usage_short(cmd, help_context, ctx);
-		ERR(ctx->trm,
+		ERR(trm,
 		    "You provided %d paths. Please provide exactly one path to add to session '%s'.\n",
 		    ctx->path_cnt, ctx->name);
 	}
@@ -4656,7 +4644,7 @@ int cmd_path_delete(int argc, const char *argv[], const struct param *cmd,
 
 	if (argc > 0) {
 
-		handle_unknown_param(*argv, params_default, ctx);
+		handle_unknown_param(*argv, params_default);
 		return -EINVAL;
 	}
 	err = check_root(ctx);
@@ -4684,8 +4672,7 @@ int cmd_client_session_reconnect(int argc, const char *argv[], const struct para
 
 	if (argc > 0) {
 
-		handle_unknown_param(*argv,
-				     params_default, ctx);
+		handle_unknown_param(*argv, params_default);
 		return -EINVAL;
 	}
 	err = check_root(ctx);
@@ -4736,19 +4723,19 @@ static int client_session_add_missing_paths(const char *session_name,
 		INF(ctx->debug_set,
 		    "No hostname for session, attempting to use existing path(s)\n");
 
-		path = find_first_path_for_session(session_name, ctx,
-						   paths_clt, paths_clt_cnt);
+		path = find_first_path_for_session(session_name, paths_clt,
+						   paths_clt_cnt);
 		if (!path) {
-			INF(ctx->trm, "No paths in session %s, not possible to recover\n",
+			INF(trm, "No paths in session %s, not possible to recover\n",
 			    session_name);
 			return 0;
 		}
 		
 		err = hostname_from_path(hostname, sizeof(hostname),
 					 path->hca_name, path->hca_port,
-					 path->dst_addr, ctx);
+					 path->dst_addr);
 		if (err < 0) {
-			ERR(ctx->trm, "Could not look up hostname for path %s\n", path->pathname);
+			ERR(trm, "Could not look up hostname for path %s\n", path->pathname);
 			return err;
 		} else {
 			INF(ctx->debug_set, "Hostname is %s\n", hostname);
@@ -4756,7 +4743,7 @@ static int client_session_add_missing_paths(const char *session_name,
 	}
 	err = resolve_host(hostname, paths, ctx);
 	if (err < 0) {
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Failed to resolve host name for %s: %s (%d)\n",
 		    hostname, strerror(-err), err);
 	} else if (err == 0) {
@@ -4809,7 +4796,7 @@ int cmd_client_session_recover(int argc, const char *argv[],
 	if (argc > 0) {
 
 		handle_unknown_param(*argv,
-				     params_recover_session_parameters_help, ctx);
+				     params_recover_session_parameters_help);
 		return -EINVAL;
 	}
 
@@ -4887,12 +4874,12 @@ int cmd_recover_device_session_or_path(int argc, const char *argv[],
 	argc -= err; argv += err; err = 0;
 
 	if (argc > 0) {
-		handle_unknown_param(*argv, params_default, ctx);
+		handle_unknown_param(*argv, params_default);
 		return -EINVAL;
 	}
 
 	if (ctx->path_cnt > 1) {
-		ERR(ctx->trm, "Multiple paths specified\n");
+		ERR(trm, "Multiple paths specified\n");
 		err = -EINVAL;
 	}
 	err = check_root(ctx);
@@ -4992,7 +4979,7 @@ int cmd_recover_device_session_or_path(int argc, const char *argv[],
 								     ctx);
 					}
 				} else {
-					ERR(ctx->trm,
+					ERR(trm,
 					    "%s is neither a device, session, nor path.\n",
 					    ctx->name);
 				}
@@ -5000,7 +4987,7 @@ int cmd_recover_device_session_or_path(int argc, const char *argv[],
 		}
 	}
 	if (err)
-		ERR(ctx->trm, "Failed to recover %s: %s (%d)\n",
+		ERR(trm, "Failed to recover %s: %s (%d)\n",
 		    (ds ? "device" : (sess ? "session" : "path")),
 		    strerror(-err), err);
 
@@ -5065,7 +5052,7 @@ int cmd_server_devices_force_close(int argc, const char *argv[], const struct pa
 
 	ds_exp = calloc(sds_srv_cnt, sizeof(*ds_exp));
 	if (!ds_exp) {
-		ERR(ctx->trm, "Failed to allocate memory\n");
+		ERR(trm, "Failed to allocate memory\n");
 		return -ENOMEM;
 	}
 
@@ -5077,7 +5064,7 @@ int cmd_server_devices_force_close(int argc, const char *argv[], const struct pa
 		ss_srv = calloc(sess_srv_cnt, sizeof(*ss_srv));
 
 		if (sess_srv_cnt && !ss_srv) {
-			ERR(ctx->trm, "Failed to alloc memory\n");
+			ERR(trm, "Failed to alloc memory\n");
 			err = -ENOMEM;
 			goto cleanup_err;
 		}
@@ -5089,11 +5076,11 @@ int cmd_server_devices_force_close(int argc, const char *argv[], const struct pa
 			sess_cnt = find_sess_match(session_name, ctx->rnbdmode, sess_srv, ss_srv);
 
 		if (sess_cnt > 1) {
-			ERR(ctx->trm, "Multiple sessions match '%s'\n", session_name);
+			ERR(trm, "Multiple sessions match '%s'\n", session_name);
 			err = -EINVAL;
 			goto cleanup_err;
 		} else if (sess_cnt <= 0) {
-			ERR(ctx->trm, "There is no session matching '%s'\n", session_name);
+			ERR(trm, "There is no session matching '%s'\n", session_name);
 			err = -ENOENT;
 			goto cleanup_err;
 		}
@@ -5120,7 +5107,7 @@ int cmd_server_devices_force_close(int argc, const char *argv[], const struct pa
 					    ds_exp[i]->mapping_path);
 				}
 			}
-			ERR(ctx->trm,
+			ERR(trm,
 			    "There is no match for device '%s' and session '%s'\n",
 			    device_name, session_name);
 			err = -ENOENT;
@@ -5129,7 +5116,7 @@ int cmd_server_devices_force_close(int argc, const char *argv[], const struct pa
 	} else if (devs_cnt == 1) {
 		ds_match = ds_exp[0];
 	} else if (devs_cnt > 1) {
-		ERR(ctx->trm,
+		ERR(trm,
 		    "Device name %s is ambiguous. Please provide a session name to make it unique.\n",
 		    device_name);
 		if (ctx->debug_set) {
@@ -5144,7 +5131,7 @@ int cmd_server_devices_force_close(int argc, const char *argv[], const struct pa
 		err = -EINVAL;
 		goto cleanup_err;
 	} else {
-		ERR(ctx->trm,
+		ERR(trm,
 		    "No matching device for %s found.\n", device_name);
 		err = -ENOENT;
 		goto cleanup_err;
@@ -5195,7 +5182,7 @@ int cmd_path_operation(int (*operation)(const char *session_name,
 
 	if (argc > 0) {
 
-		handle_unknown_param(*argv, params_default, ctx);
+		handle_unknown_param(*argv, params_default);
 		return -EINVAL;
 	}
 	err = check_root(ctx);
@@ -5207,21 +5194,21 @@ int cmd_path_operation(int (*operation)(const char *session_name,
 	} else if (ctx->path_cnt == 0) {
 		err = (*operation)(NULL, ctx->name, ctx);
 	} else {
-		ERR(ctx->trm, "Multiple paths specified\n");
+		ERR(trm, "Multiple paths specified\n");
 		err = -EINVAL;
 	}
 	return err;
 }
 
 int cmd_ambiguous(int argc, const char *argv[], const struct param *cmd,
-		  const char *help_context, struct rnbd_ctx *ctx)
+		  const char *help_context)
 {
-	ERR(ctx->trm, "Ambiguous command!\n");
+	ERR(trm, "Ambiguous command!\n");
 
 	printf("Please specify either ");
-	clr_print(ctx->trm, CCYN, "client");
+	clr_print(trm, CCYN, "client");
 	printf(" or ");
-	clr_print(ctx->trm, CCYN, "server");
+	clr_print(trm, CCYN, "server");
 	printf(" to reconnect/disconnect a session or a path.\n");
 
 	return -EINVAL;
@@ -5243,9 +5230,9 @@ int cmd_both_sessions(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			err = -EINVAL;
 
 		if (argc)
-			handle_unknown_param(*argv, cmds_both_sessions, ctx);
+			handle_unknown_param(*argv, cmds_both_sessions);
 		else if (!ctx->complete_set)
-			ERR(ctx->trm, "Please specify a command\n");
+			ERR(trm, "Please specify a command\n");
 	}
 	if (err >= 0) {
 
@@ -5285,7 +5272,7 @@ int cmd_both_sessions(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			break;
 		case TOK_RECONNECT:
 		case TOK_DISCONNECT:
-			err = cmd_ambiguous(argc, argv, cmd, "both session", ctx);
+			err = cmd_ambiguous(argc, argv, cmd, "both session");
 			break;
 		case TOK_RECOVER:
 			err = cmd_client_session_recover(argc, argv, cmd, _help_context, ctx);
@@ -5300,7 +5287,7 @@ int cmd_both_sessions(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			print_usage(_help_context,
 				    cmds_both_sessions_help, ctx);
 			handle_unknown_param(cmd->param_str,
-					     cmds_both_sessions, ctx);
+					     cmds_both_sessions);
 			err = -EINVAL;
 			break;
 		}
@@ -5326,9 +5313,9 @@ int cmd_both_paths(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			err = -EINVAL;
 
 		if (argc)
-			handle_unknown_param(*argv, cmds_both_paths, ctx);
+			handle_unknown_param(*argv, cmds_both_paths);
 		else if (!ctx->complete_set)
-			ERR(ctx->trm, "Please specify a command\n");
+			ERR(trm, "Please specify a command\n");
 	}
 	if (err >= 0) {
 
@@ -5378,7 +5365,7 @@ int cmd_both_paths(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			break;
 		case TOK_RECONNECT:
 		case TOK_DISCONNECT:
-			err = cmd_ambiguous(argc, argv, cmd, "both path", ctx);
+			err = cmd_ambiguous(argc, argv, cmd, "both path");
 			break;
 		case TOK_HELP:
 			parse_help(argc, argv, NULL, ctx);
@@ -5388,7 +5375,7 @@ int cmd_both_paths(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		default:
 			print_usage(_help_context_both, cmds_both_paths_help, ctx);
 			handle_unknown_param(cmd->param_str,
-					     cmds_both_paths, ctx);
+					     cmds_both_paths);
 			err = -EINVAL;
 			break;
 		}
@@ -5413,9 +5400,9 @@ int cmd_client_sessions(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			err = -EINVAL;
 
 		if (argc)
-			handle_unknown_param(*argv, cmds_client_sessions, ctx);
+			handle_unknown_param(*argv, cmds_client_sessions);
 		else if (!ctx->complete_set)
-			ERR(ctx->trm, "Please specify a command\n");
+			ERR(trm, "Please specify a command\n");
 	}
 	if (err >= 0) {
 
@@ -5468,7 +5455,7 @@ int cmd_client_sessions(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			print_usage(_help_context,
 				    cmds_client_sessions_help, ctx);
 			handle_unknown_param(cmd->param_str,
-					     cmds_client_sessions, ctx);
+					     cmds_client_sessions);
 			err = -EINVAL;
 			break;
 		}
@@ -5495,9 +5482,9 @@ int cmd_client_devices(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			err = -EINVAL;
 
 		if (argc)
-			handle_unknown_param(*argv, cmds_client_devices, ctx);
+			handle_unknown_param(*argv, cmds_client_devices);
 		else if (!ctx->complete_set)
-			ERR(ctx->trm, "Please specify a command\n");
+			ERR(trm, "Please specify a command\n");
 	}
 	if (err >= 0) {
 
@@ -5562,7 +5549,7 @@ int cmd_client_devices(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		default:
 			print_usage(_help_context_both, cmds_client_devices, ctx);
 			handle_unknown_param(cmd->param_str,
-					     cmds_client_devices, ctx);
+					     cmds_client_devices);
 			err = -EINVAL;
 			break;
 		}
@@ -5587,9 +5574,9 @@ int cmd_client_paths(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			err = -EINVAL;
 
 		if (argc)
-			handle_unknown_param(*argv, cmds_client_paths, ctx);
+			handle_unknown_param(*argv, cmds_client_paths);
 		else if (!ctx->complete_set)
-			ERR(ctx->trm, "Please specify a command\n");
+			ERR(trm, "Please specify a command\n");
 	}
 	if (err >= 0) {
 
@@ -5656,7 +5643,7 @@ int cmd_client_paths(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		default:
 			print_usage(_help_context, cmds_client_paths_help, ctx);
 			handle_unknown_param(cmd->param_str,
-					     cmds_client_paths, ctx);
+					     cmds_client_paths);
 			err = -EINVAL;
 			break;
 		}
@@ -5681,9 +5668,9 @@ int cmd_server_sessions(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			err = -EINVAL;
 
 		if (argc)
-			handle_unknown_param(*argv, cmds_server_sessions, ctx);
+			handle_unknown_param(*argv, cmds_server_sessions);
 		else if (!ctx->complete_set)
-			ERR(ctx->trm, "Please specify a command\n");
+			ERR(trm, "Please specify a command\n");
 	}
 	if (err >= 0) {
 
@@ -5729,7 +5716,7 @@ int cmd_server_sessions(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			print_usage(_help_context,
 				    cmds_server_sessions_help, ctx);
 			handle_unknown_param(cmd->param_str,
-					    cmds_server_sessions, ctx);
+					    cmds_server_sessions);
 			err = -EINVAL;
 			break;
 		}
@@ -5754,9 +5741,9 @@ int cmd_server_devices(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			err = -EINVAL;
 
 		if (argc)
-			handle_unknown_param(*argv, cmds_server_devices, ctx);
+			handle_unknown_param(*argv, cmds_server_devices);
 		else if (!ctx->complete_set)
-			ERR(ctx->trm, "Please specify a command\n");
+			ERR(trm, "Please specify a command\n");
 	}
 	if (err >= 0) {
 
@@ -5791,7 +5778,8 @@ int cmd_server_devices(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			err = show_devices(ctx->name, ctx);
 			break;
 		case TOK_CLOSE:
-			err = cmd_server_devices_force_close(argc, argv, cmd, _help_context, ctx);
+			err = cmd_server_devices_force_close(argc, argv, cmd,
+					_help_context, ctx);
 			break;
 		case TOK_HELP:
 			parse_help(argc, argv, NULL, ctx);
@@ -5801,7 +5789,7 @@ int cmd_server_devices(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		default:
 			print_usage(_help_context, cmds_server_devices, ctx);
 			handle_unknown_param(cmd->param_str,
-					     cmds_client_sessions, ctx);
+					     cmds_client_sessions);
 			err = -EINVAL;
 			break;
 		}
@@ -5826,9 +5814,9 @@ int cmd_server_paths(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			err = -EINVAL;
 
 		if (argc)
-			handle_unknown_param(*argv, cmds_server_paths, ctx);
+			handle_unknown_param(*argv, cmds_server_paths);
 		else if (!ctx->complete_set)
-			ERR(ctx->trm, "Please specify a command\n");
+			ERR(trm, "Please specify a command\n");
 	}
 	if (err >= 0) {
 
@@ -5873,7 +5861,7 @@ int cmd_server_paths(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		default:
 			print_usage(_help_context, cmds_server_paths_help, ctx);
 			handle_unknown_param(cmd->param_str,
-					    cmds_client_sessions, ctx);
+					    cmds_client_sessions);
 			err = -EINVAL;
 			break;
 		}
@@ -5893,7 +5881,7 @@ int cmd_client(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		if (ctx->complete_set) {
 			err = -EAGAIN;
 		} else {
-			ERR(ctx->trm, "no object specified\n");
+			ERR(trm, "no object specified\n");
 			err = -EINVAL;
 		}
 	}
@@ -5902,7 +5890,7 @@ int cmd_client(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		if (!param) {
 			usage_param("rnbd client",
 				   params_object_type_help_client, ctx);
-			handle_unknown_param(*argv, params_object_type_client, ctx);
+			handle_unknown_param(*argv, params_object_type_client);
 			err = -EINVAL;
 		} else if (param->parse) {
 			(void) param->parse(argc, argv, param, ctx);
@@ -5980,8 +5968,7 @@ int cmd_client(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		default:
 			usage_param("rnbd client",
 				   params_object_type_help_client, ctx);
-			handle_unknown_param(*argv, params_object_type_client,
-					     ctx);
+			handle_unknown_param(*argv, params_object_type_client);
 			err = -EINVAL;
 			break;
 		}
@@ -6001,7 +5988,7 @@ int cmd_server(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		if (ctx->complete_set) {
 			err = -EAGAIN;
 		} else {
-			ERR(ctx->trm, "no object specified\n");
+			ERR(trm, "no object specified\n");
 			err = -EINVAL;
 		}
 	}
@@ -6010,8 +5997,7 @@ int cmd_server(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		if (!param) {
 			usage_param("rnbd server",
 				   params_object_type_help_server, ctx);
-			handle_unknown_param(*argv, params_object_type_server,
-					     ctx);
+			handle_unknown_param(*argv, params_object_type_server);
 			err = -EINVAL;
 		} else if (param->parse) {
 			(void) param->parse(argc, argv, param, ctx);
@@ -6076,8 +6062,7 @@ int cmd_server(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		default:
 			usage_param("rnbd server",
 				   params_object_type_help_server, ctx);
-			handle_unknown_param(*argv, params_object_type_server,
-					     ctx);
+			handle_unknown_param(*argv, params_object_type_server);
 			err = -EINVAL;
 			break;
 		}
@@ -6095,14 +6080,14 @@ int cmd_both(int argc, const char *argv[], struct rnbd_ctx *ctx)
 		if (ctx->complete_set) {
 			err = -EAGAIN;
 		} else {
-			ERR(ctx->trm, "no object specified\n");
+			ERR(trm, "no object specified\n");
 			err = -EINVAL;
 		}
 	}
 	if (err >= 0) {
 		param = find_param(*argv, params_both);
 		if (!param) {
-			handle_unknown_param(*argv, params_both, ctx);
+			handle_unknown_param(*argv, params_both);
 			usage_param(ctx->pname, params_both_help, ctx);
 			err = -EINVAL;
 		} else if (param->parse) {
@@ -6185,7 +6170,7 @@ int cmd_both(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			}
 			break;
 		default:
-			handle_unknown_param(*argv, params_both, ctx);
+			handle_unknown_param(*argv, params_both);
 			usage_param(ctx->pname, params_both_help, ctx);
 			err = -EINVAL;
 			break;
@@ -6217,17 +6202,16 @@ int cmd_start(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			if (argc < 1) {
 				usage_param(ctx->pname, params_mode_help, ctx);
 				if (!ctx->complete_set)
-					ERR(ctx->trm,
-					    "Please specify an argument\n");
+					ERR(trm, "Please specify an argument\n");
 				return -EINVAL;
 			}
 			return cmd_both(argc, argv, ctx);
 		default:
-			ERR(ctx->trm,
+			ERR(trm,
 			    "RNBD mode not specified and could not be deduced.\n");
 			print_usage(NULL, params_mode_help, ctx);
 
-			handle_unknown_param(*argv, params_mode, ctx);
+			handle_unknown_param(*argv, params_mode);
 			usage_param(ctx->pname, params_mode_help, ctx);
 			err = -EINVAL;
 		}
@@ -6253,7 +6237,7 @@ int cmd_start(int argc, const char *argv[], struct rnbd_ctx *ctx)
 			print_version(ctx);
 			break;
 		default:
-			handle_unknown_param(*argv, params_mode, ctx);
+			handle_unknown_param(*argv, params_mode);
 			usage_param(ctx->pname, params_mode_help, ctx);
 			err = -EINVAL;
 			break;
@@ -6293,15 +6277,14 @@ int main(int argc, const char *argv[])
 				    &sess_clt_cnt, &sess_srv_cnt,
 				    &paths_clt_cnt, &paths_srv_cnt);
 	if (ret) {
-		ERR(ctx.trm,
-		    "Failed to alloc memory for sysfs entries: %d\n", ret);
+		ERR(trm, "Failed to alloc memory for sysfs entries: %d\n", ret);
 		goto out;
 	}
 
 	ret = rnbd_sysfs_read_all(sds_clt, sds_srv, sess_clt, sess_srv,
 				   paths_clt, paths_srv);
 	if (ret) {
-		ERR(ctx.trm, "Failed to read sysfs entries: %d\n", ret);
+		ERR(trm, "Failed to read sysfs entries: %d\n", ret);
 		goto free;
 	}
 	qsort(sds_clt, sds_clt_cnt - 1, sizeof(*sds_clt), compar_sds_dev);
@@ -6312,7 +6295,7 @@ int main(int argc, const char *argv[])
 	ret = read_port_descs(ctx.port_descs, MAX_PATHS_PER_SESSION);
 	if (ret < 0) {
 
-		ERR(ctx.trm, "Failed to read port descriptions entries: %d\n", ret);
+		ERR(trm, "Failed to read port descriptions entries: %d\n", ret);
 		goto free;
 	}
 	ctx.port_cnt = ret; ret = 0;
@@ -6330,7 +6313,7 @@ int main(int argc, const char *argv[])
 	    ctx.pname, get_sysfs_info(&ctx)->path_dev_name);
 
 	if (argc && *argv[0] == '-') {
-		handle_unknown_param(*argv, params_flags, &ctx);
+		handle_unknown_param(*argv, params_flags);
 		help_param(ctx.pname, params_flags_help, &ctx);
 		ret = -EINVAL;
 		goto free;

@@ -18,6 +18,7 @@
 #include "rnbd-sysfs.h"
 
 extern struct table_column *clms_paths_shortdesc[];
+extern bool trm;
 
 int list_devices_term(struct rnbd_sess_dev **sds,
 		      struct table_column **cs,
@@ -45,7 +46,7 @@ int list_devices_term(struct rnbd_sess_dev **sds,
 
 	flds = calloc((dev_num + 1) * cs_cnt, sizeof(*flds));
 	if (!flds) {
-		ERR(ctx->trm, "not enough memory\n");
+		ERR(trm, "not enough memory\n");
 		return -ENOMEM;
 	}
 
@@ -60,17 +61,17 @@ int list_devices_term(struct rnbd_sess_dev **sds,
 				    cs, ctx, true, 0);
 
 	if (!ctx->noheaders_set)
-		table_header_print_term("", cs, ctx->trm);
+		table_header_print_term("", cs, trm);
 
 	for (i = 0; i < dev_num; i++)
 		table_flds_print_term("", flds + i * cs_cnt,
-				      cs, ctx->trm, 0);
+				      cs, trm, 0);
 
 	if (!nototals_set) {
-		table_row_print_line("", cs, ctx->trm, 0);
+		table_row_print_line("", cs, trm, 0);
 		table_flds_del_not_num(flds + i * cs_cnt, cs);
 		table_flds_print_term("", flds + i * cs_cnt,
-				      cs, ctx->trm, 0);
+				      cs, trm, 0);
 	}
 
 	free(flds);
@@ -156,7 +157,7 @@ int list_sessions_term(struct rnbd_sess **sessions,
 
 	sorted_sessions = calloc(sess_num + 1, sizeof(*sessions));
 	if (!sorted_sessions) {
-		ERR(ctx->trm, "not enough memory\n");
+		ERR(trm, "not enough memory\n");
 		return -ENOMEM;
 	}
 	memcpy(sorted_sessions, sessions, sizeof(*sessions) * sess_num);
@@ -165,7 +166,7 @@ int list_sessions_term(struct rnbd_sess **sessions,
 	flds = calloc((sess_num + 1) * cs_cnt, sizeof(*flds));
 	if (!flds) {
 		free(sorted_sessions);
-		ERR(ctx->trm, "not enough memory\n");
+		ERR(trm, "not enough memory\n");
 		return -ENOMEM;
 	}
 
@@ -187,11 +188,11 @@ int list_sessions_term(struct rnbd_sess **sessions,
 	}
 
 	if (!ctx->noheaders_set)
-		table_header_print_term("", cs, ctx->trm);
+		table_header_print_term("", cs, trm);
 
 	for (i = 0; sorted_sessions[i]; i++) {
 		table_flds_print_term("", flds + i * cs_cnt,
-				      cs, ctx->trm, 0);
+				      cs, trm, 0);
 		if (!ctx->notree_set)
 			list_paths_term(sorted_sessions[i]->paths,
 					sorted_sessions[i]->path_cnt,
@@ -200,10 +201,10 @@ int list_sessions_term(struct rnbd_sess **sessions,
 	}
 
 	if (!ctx->nototals_set && table_has_num(cs)) {
-		table_row_print_line("", cs, ctx->trm, 0);
+		table_row_print_line("", cs, trm, 0);
 		table_flds_del_not_num(flds + sess_num * cs_cnt, cs);
 		table_flds_print_term("", flds + sess_num * cs_cnt,
-				      cs, ctx->trm, 0);
+				      cs, trm, 0);
 	}
 
 	free(sorted_sessions);
@@ -314,20 +315,20 @@ int list_paths_term(struct rnbd_path **paths, int path_cnt,
 
 	for (i = 0; i < path_cnt; i++) {
 		if (!paths[i]) {
-			ERR(ctx->trm, "inconsistent internal data path_cnt <-> paths\n");
+			ERR(trm, "inconsistent internal data path_cnt <-> paths\n");
 			return -EFAULT;
 		}
 	}
 	flds = calloc((path_cnt + 1) * cs_cnt, sizeof(*flds));
 	if (!flds) {
-		ERR(ctx->trm, "not enough memory\n");
+		ERR(trm, "not enough memory\n");
 		return -ENOMEM;
 	}
 
 	sorted_paths = alloc_sorted_paths(paths, path_cnt, comp);
 	if (!sorted_paths) {
 		free(flds);
-		ERR(ctx->trm, "not enough memory\n");
+		ERR(trm, "not enough memory\n");
 		return -EFAULT;
 	}
 
@@ -335,7 +336,7 @@ int list_paths_term(struct rnbd_path **paths, int path_cnt,
 		if (!sorted_paths[i]) {
 			free_sorted_paths(sorted_paths);
 			free(flds);
-			ERR(ctx->trm, "inconsistent internal data path_cnt <-> paths\n");
+			ERR(trm, "inconsistent internal data path_cnt <-> paths\n");
 			return -EFAULT;
 		}
 		table_row_stringify(sorted_paths[i], flds + fld_cnt, cs, ctx, true, 0);
@@ -352,20 +353,20 @@ int list_paths_term(struct rnbd_path **paths, int path_cnt,
 		table_row_stringify(&total, flds + fld_cnt, cs, ctx, true, 0);
 
 	if (!ctx->noheaders_set && !tree)
-		table_header_print_term("", cs, ctx->trm);
+		table_header_print_term("", cs, trm);
 
 	fld_cnt = 0;
 	for (i = 0; i < path_cnt; i++) {
 		table_flds_print_term(
 			!tree ? "" : i < path_cnt - 1 ?
-			"├─ " : "└─ ", flds + fld_cnt, cs, ctx->trm, 0);
+			"├─ " : "└─ ", flds + fld_cnt, cs, trm, 0);
 		fld_cnt += cs_cnt;
 	}
 
 	if (!ctx->nototals_set && table_has_num(cs) && !tree) {
-		table_row_print_line("", cs, ctx->trm, 0);
+		table_row_print_line("", cs, trm, 0);
 		table_flds_del_not_num(flds + fld_cnt, cs);
-		table_flds_print_term("", flds + fld_cnt, cs, ctx->trm, 0);
+		table_flds_print_term("", flds + fld_cnt, cs, trm, 0);
 	}
 
 	free_sorted_paths(sorted_paths);

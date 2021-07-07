@@ -120,7 +120,6 @@ struct rnbd_ctx {
 	const char *from;
 	bool from_set;
 
-	bool trm; /* True if STDOUT is a terminal */
 };
 
 int get_unit_index(const char *unit, int *index);
@@ -206,7 +205,7 @@ int resolve_host(const char *from_name, struct path *path,
 		 const struct rnbd_ctx *ctx);
 
 int hostname_from_path(char *host, int host_len, const char *hca, int port,
-		       const char *server_gid, const struct rnbd_ctx *ctx);
+		       const char *server_gid);
 
 #define container_of(ptr, type, member) ({                      \
 		const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
