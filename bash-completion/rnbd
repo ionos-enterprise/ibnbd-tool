@@ -82,6 +82,9 @@ _rnbd()
 	help)
 		opts="all"
 		;;
+	map)
+		opts="help"
+		;;
 	show)
 		cmd="${COMP_WORDS[@]:0:COMP_CWORD-2} "
 		case ${pprev} in
