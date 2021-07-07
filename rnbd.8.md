@@ -225,21 +225,6 @@ Options:
     {format}        Output format: csv|json|xml
     {unit}          Units to use for size (in binary): B|K|M|G|T|P|E
     help            Display help and exit. [fields|all]
-**rnbd client session remap <session\>** *[OPTIONS]*
-
-Remap all devices of a given session
-
-Arguments:
-
-    <session>       Identifier of a session to remap all devices on.
-
-Options:
-
-    force           Force operation
-                    When provided, all devices will be unmapped and mapped again.
-
-    verbose         Verbose output
-    help            Display help and exit
 **rnbd client session reconnect <session\>** *[OPTIONS]*
 
 Disconnect and connect again a whole session
@@ -264,6 +249,21 @@ Arguments:
 Options:
 
     add-missing     Add missing paths
+    verbose         Verbose output
+    help            Display help and exit
+**rnbd client session remap <session\>** *[OPTIONS]*
+
+Remap all devices of a given session
+
+Arguments:
+
+    <session>       Identifier of a session to remap all devices on.
+
+Options:
+
+    force           Force operation
+                    When provided, all devices will be unmapped and mapped again.
+
     verbose         Verbose output
     help            Display help and exit
 **rnbd client path list** *[OPTIONS]*
@@ -382,6 +382,27 @@ Options:
 
     verbose         Verbose output
     help            Display help and exit
+**rnbd client path recover [session] <path\>|all** *[OPTIONS]*
+
+Recover a path: reconnect if not in connected state.
+
+Arguments:
+
+    [session]       Optional session name to select a path in the case paths
+                    with same addresses are used in multiple sessions.
+    <path>          Name or identifier of a path:
+                    [pathname], [sessname:port]
+
+    <hca_name>:<port>
+    <hca_name>
+    <port>          alternative to path a hca/port specification
+                    might be provided.
+                    This requires that session name has been provided.
+
+Options:
+
+    verbose         Verbose output
+    help            Display help and exit
 **rnbd client path add <session\> <path\>** *[OPTIONS]*
 
 Add a new path to an existing session
@@ -420,27 +441,6 @@ Options:
 **rnbd client path readd [session] <path\>** *[OPTIONS]*
 
 Delete and add again a given path to the corresponding session
-
-Arguments:
-
-    [session]       Optional session name to select a path in the case paths
-                    with same addresses are used in multiple sessions.
-    <path>          Name or identifier of a path:
-                    [pathname], [sessname:port]
-
-    <hca_name>:<port>
-    <hca_name>
-    <port>          alternative to path a hca/port specification
-                    might be provided.
-                    This requires that session name has been provided.
-
-Options:
-
-    verbose         Verbose output
-    help            Display help and exit
-**rnbd client path recover [session] <path\>|all** *[OPTIONS]*
-
-Recover a path: reconnect if not in connected state.
 
 Arguments:
 
