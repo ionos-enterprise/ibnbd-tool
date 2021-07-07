@@ -51,7 +51,7 @@ $(MANPAGE_8): $(MANPAGE_MD)
 	mkdir -p man
 	pandoc rnbd.8.md -s -t man -o man/rnbd.8
 
-$(MANPAGE_MD): $(TARGETS_OBJ:.o=)
+$(MANPAGE_MD): $(TARGETS_OBJ:.o=) Makefile
 	./rnbd.h2md.sh ${VERSION}> $@
 	@echo "Words misspelled in manual:"
 	@spell rnbd.8.md -d spell.ignore | sort | uniq
