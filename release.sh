@@ -17,7 +17,7 @@ sed -i "s/^VERSION.*/VERSION := $version/" Makefile
 # Update the man page
 rm rnbd.8.md
 rm man/rnbd.8
-make man/rnbd.8
+make man
 
 # Commit the changes
 git commit -asm "rnbd: release $version"
