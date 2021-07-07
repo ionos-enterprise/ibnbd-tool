@@ -528,17 +528,19 @@ static  void usage_param(const char *str, struct param *const params[],
 			printf("|%s%s%s",
 			       CLR(trm, CBLD, (*params)->param_str));
 
-		printf("\n\n");
+		printf(" [SUBCOMMANDS]\n\n");
 	}
 }
 
 #define HP "    "
 #define HPRE HP "                "
-#define HOPT HP "%-16s%s\n"
 
 static void print_opt(const char *opt, const char *descr)
 {
-	printf(HOPT, opt, descr);
+	if (trm)
+		printf(HP "\x1B[1m%-16s\x1B[0m%s\n", opt, descr);
+	else
+		printf(HP "%-16s%s\n", opt, descr);
 }
 
 static void print_param_descr(char *str)
@@ -561,8 +563,8 @@ static void help_param(const char *str, struct param *const params[],
 		       const struct rnbd_ctx *ctx)
 {
 	usage_param(str, params, ctx);
-
-	print_param(str, params, ctx);
+	printf("Subcommands:\n");
+	print_param(str, params);
 }
 
 static void print_usage(const char *sub_name, struct param * const cmds[],
