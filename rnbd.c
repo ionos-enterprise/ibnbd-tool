@@ -1166,27 +1166,6 @@ static int show_device(struct rnbd_sess_dev **clt, struct rnbd_sess_dev **srv,
 	return 0;
 }
 
-static bool match_sess(struct rnbd_sess *s, const char *name,
-		       enum rnbdmode rnbdmode)
-{
-	char *at;
-
-	if (!strcmp(name, s->sessname))
-		return true;
-
-	at = strchr(s->sessname, '@');
-	if (at) {
-		if ((rnbdmode & RNBD_CLIENT)
-		    && (!strcmp(name, at + 1)))
-			return true;
-		if ((rnbdmode & RNBD_SERVER)
-		    && !strncmp(name, s->sessname, at-s->sessname)
-		    && (strlen(name) == at-s->sessname))
-			return true;
-	}
-	return false;
-}
-
 static struct rnbd_sess *find_sess(const char *name,
 				   struct rnbd_sess **ss)
 {
@@ -1205,7 +1184,8 @@ static int find_sess_match(const char *name, enum rnbdmode rnbdmode,
 	int i, cnt = 0;
 
 	for (i = 0; ss[i]; i++)
-		if (match_sess(ss[i], name, rnbdmode))
+		if (!strcmp(ss[i]->sessname, name) ||
+		    !strcmp(ss[i]->hostname, name))
 			res[cnt++] = ss[i];
 
 	res[cnt] = NULL;
@@ -2110,7 +2090,7 @@ static struct rnbd_sess *find_single_session(const char *session_name,
 		return NULL;
 	}
 	match_count = find_sess_match(session_name, ctx->rnbdmode, sessions,
-					  matching_sess);
+				      matching_sess);
 
 	if (match_count == 1) {
 		res = *matching_sess;
