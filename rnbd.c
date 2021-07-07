@@ -552,7 +552,7 @@ static void print_param_descr(char *str)
 		print_opt(s->param_str, s->descr);
 }
 
-static void print_param(const char *str, struct param *const params[])
+static void print_param(struct param *const params[])
 {
 	do {
 		print_opt((*params)->param_str, (*params)->descr);
@@ -564,7 +564,7 @@ static void help_param(const char *str, struct param *const params[],
 {
 	usage_param(str, params, ctx);
 	printf("Subcommands:\n");
-	print_param(str, params);
+	print_param(params);
 }
 
 static void print_usage(const char *sub_name, struct param * const cmds[],
@@ -634,10 +634,7 @@ static void print_help(const char *program_name,
 	cmd->help(program_name, cmd, ctx);
 
 	printf("\nSubcommands:\n");
-	do {
-		printf("\n\n");
-		(*sub_cmds)->help(program_name, *sub_cmds, ctx);
-	} while ((*++sub_cmds)->param_str);
+	print_param(sub_cmds);
 }
 
 static void print_clms_list(struct table_column **clms)
@@ -663,7 +660,7 @@ static void help_object(const char *program_name,
 	else
 		word = program_name;
 
-	printf(HP "Execute operations on %ss.\n", word);
+	printf("Execute operations on %ss.\n", word);
 }
 
 static void help_fields(void)
@@ -4605,8 +4602,7 @@ int cmd_path_add(int argc, const char *argv[], const struct param *cmd,
 		handle_unknown_param(*argv, params_add_path_help);
 		if (err < 0) {
 			printf("\n");
-			print_param(ctx->pname,
-				    params_add_path_help);
+			print_param(params_add_path_help);
 		}
 		return -EINVAL;
 	}
