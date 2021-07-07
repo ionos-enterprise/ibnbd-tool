@@ -13,7 +13,7 @@ SRC = $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
 SRC_H = $(wildcard *.h)
 
-DIST := dist bash-completion/rnbd README.md rnbd.h2md.sh Makefile NEWS spell.ignore examples $(SRC) $(SRC_H)
+DIST := bash-completion/rnbd README.md rnbd.h2md.sh Makefile NEWS spell.ignore examples $(SRC) $(SRC_H)
 
 TARGETS_OBJ = rnbd.o
 TARGETS = $(TARGETS_OBJ:.o=)
@@ -48,6 +48,7 @@ $(TARGETS): $(OBJ)
 man: $(MANPAGE_8)
 
 $(MANPAGE_8): $(MANPAGE_MD)
+	mkdir -p man
 	pandoc rnbd.8.md -s -t man -o man/rnbd.8
 
 $(MANPAGE_MD): $(TARGETS_OBJ:.o=)
