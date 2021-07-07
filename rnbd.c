@@ -572,7 +572,8 @@ static void print_usage(const char *sub_name, struct param * const cmds[],
 {
 	if (ctx->complete_set) {
 		for (; (*cmds)->param_str; cmds++)
-			printf("%s ", (*cmds)->param_str);
+			if (strcmp("help", (*cmds)->param_str))
+				printf("%s ", (*cmds)->param_str);
 		printf("\n");
 	} else {
 		if (sub_name)

@@ -57,19 +57,17 @@ RNBD \(RDMA Network Block Device\) is a pair of kernel modules \(client and serv
 "
 for m in $modes; do
 	for o in $objects; do
-		for c in $cmds; do
-			if rnbd $m $o $c help 2>1 > /dev/null; then
-				output=$(rnbd $m $o $c help all | \
-				sed -n -e '1s/>/\\>/g' \
-					-e '1s/Usage: /**/' \
-					-e '1s/ \[OPTIONS\]/** *\[OPTIONS\]*/' \
-					-e 's/[ \t]*$//' \
-					-e '1s=>=\>=g' \
-					-e 's/^Options:/Options:\n/' \
-					-e 's/^Arguments:/Arguments:\n/' \
-					-e '/^Example:/q;p')
-				echo "$output"
-			fi
+		for c in $(./rnbd --complete $m $o); do
+			output=$(rnbd $m $o $c help all | \
+			sed -n -e '1s/>/\\>/g' \
+				-e '1s/Usage: /**/' \
+				-e '1s/ \[OPTIONS\]/** *\[OPTIONS\]*/' \
+				-e 's/[ \t]*$//' \
+				-e '1s=>=\>=g' \
+				-e 's/^Options:/Options:\n/' \
+				-e 's/^Arguments:/Arguments:\n/' \
+				-e '/^Example:/q;p')
+			echo "$output"
 		done
 	done
 done
