@@ -1,3 +1,35 @@
+rnbd (1.2.0) jessie stretch buster bullseye; urgency=medium
+
+  [ Lutz Pogrell ]
+  * declare printf like functions as such
+  * fix compiler warnings for format specifiers of printf_sysfs and scanf_sysfs
+
+  [ Danil Kipnis ]
+  * rnbd: pass version to rnbd.h2md.sh
+  * Makefile: add NEWS, examples, spell.ignore, remove man in tar
+  * Makefile: add manpage to the list of all targets
+  * Manpage: update to current master version 1.0.23
+  * Makefile: get rid of circular dependancy for dist
+
+  [ Lutz Pogrell ]
+  * Man page will be re-generated when version number changes.
+
+  [ Danil Kipnis ]
+  * rnbd: make  obligatory for rnbd.h2md.sh
+  * rnbd: fix rnbd help
+  * rnbd: Move trm member out of rnbs_ctx structure
+  * rnbd: extend rnbd help output
+  * rnbd: fix rnbd client device help
+  * rnbd: add help in bash-completion for map
+  * rnbd: get rid of the mistery 1 file
+  * rnbd: regenerate manpage
+  * scripts: release.sh use man make target
+  * rnbd: release 1.2.0
+  * deb: add spell and pandoc build dependancies
+  * rnbd: fix match session by hostname
+
+ -- Danil Kipnis <danil.kipnis@ionos.com>  Wed, 07 Jul 2021 16:45:26 +0200
+
 rnbd (1.0.23) jessie stretch buster bullseye; urgency=medium
 
   * deb: Let rnbd-tool depends on same version of rnbd
