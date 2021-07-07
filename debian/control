@@ -5,6 +5,8 @@ Priority: optional
 Build-Depends: debhelper (>= 7),
                exuberant-ctags,
                bash-completion,
+	       spell,
+	       pandoc
 Standards-Version: 3.9.5
 Homepage: https://gitlab.pb.local/ibnbd/ibnbd-tool.git
 
