@@ -9,6 +9,14 @@
 
 PATH=$PATH:./
 VER=$1
+
+if [ -z "$VER" ]; then
+	echo "Please provide the version to generate manpage for" 1>&2
+	exit 1
+else
+	echo "Generating manpage version $VER" 1>&2
+fi
+
 DATE=$(LANG=en_us_8859_1 && date +"%B %Y")
 
 modes="client server"
