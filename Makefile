@@ -24,7 +24,7 @@ MANPAGE_8 = man/$(TARGETS_OBJ:.o=.8)
       rnbd_OBJ = levenshtein.o misc.o table.o rnbd-sysfs.o list.o
 
 .PHONY: all
-all: $(TARGETS)
+all: $(TARGETS) man/rnbd.8
 
 dist: rnbd-$(VERSION).tar.xz rnbd-$(VERSION).tar.xz.asc
 
